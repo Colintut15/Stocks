@@ -603,7 +603,11 @@ async function snapSign(path, query, body) {
 
 async function snapReq(method, path, query, body) {
   const { ts, qs, sig } = await snapSign(path, query, body ? body : '');
-  const url = SNAPTRADE_BASE + path + '?' + qs;
+  const targetUrl = SNAPTRADE_BASE + path + '?' + qs;
+
+  // Use corsproxy.io to bypass CORS restrictions
+  const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
+
   const opts = {
     method,
     headers: {
@@ -614,7 +618,7 @@ async function snapReq(method, path, query, body) {
     }
   };
   if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(url, opts);
+  const res = await fetch(proxyUrl, opts);
   const text = await res.text();
   let data;
   try { data = JSON.parse(text); } catch { data = text; }
