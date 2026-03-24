@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Trader — Questrade</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Fraunces:ital,wght@0,300;0,700;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f0e8;
+    --surface: #fffdf7;
+    --surface2: #eee8d8;
+    --border: #d4c9b0;
+    --accent: #1a6b3c;
+    --accent-light: #e8f5ee;
+    --danger: #c0392b;
+    --danger-light: #fdf0ee;
+    --warn: #b7700a;
+    --warn-light: #fdf5e6;
+    --blue: #1a4a7a;
+    --blue-light: #e8f0f8;
+    --text: #1a1a14;
+    --muted: #7a7060;
+    --ink: #2a2418;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    font-size: 13px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c4b898' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* HEADER */
+  header {
+    border-bottom: 2px solid var(--ink);
+    padding: 18px 0;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .logo {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -1px;
+  }
+
+  .logo em {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--accent);
+  }
+
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .pill {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border: 1px solid currentColor;
+  }
+
+  .pill-green { color: var(--accent); background: var(--accent-light); }
+  .pill-red { color: var(--danger); background: var(--danger-light); }
+  .pill-grey { color: var(--muted); background: var(--surface2); }
+  .pill-blue { color: var(--blue); background: var(--blue-light); }
+
+  /* SETUP */
+  #setup-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 82vh;
+  }
+
+  .setup-card {
+    background: var(--surface);
+    border: 2px solid var(--ink);
+    border-radius: 4px;
+    padding: 48px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 6px 6px 0 var(--ink);
+  }
+
+  .setup-card h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--ink);
+  }
+
+  .setup-card .subtitle {
+    color: var(--muted);
+    margin-bottom: 28px;
+    line-height: 1.6;
+    font-size: 12px;
+  }
+
+  .warn-box {
+    background: var(--warn-light);
+    border: 1px solid var(--warn);
+    border-radius: 4px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--warn);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  .field { margin-bottom: 18px; }
+  .field label {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .field input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 10px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field input:focus { border-color: var(--accent); }
+  .field input::placeholder { color: var(--border); }
+
+  .btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 11px 20px;
+    border-radius: 3px;
+    border: 2px solid var(--ink);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.3px;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--bg);
+    width: 100%;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-sm {
+    padding: 7px 14px;
+    font-size: 11px;
+    width: auto;
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--ink);
+  }
+  .btn-outline:hover { background: var(--surface2); }
+
+  .btn-danger-outline {
+    background: transparent;
+    color: var(--danger);
+    border-color: var(--danger);
+  }
+  .btn-danger-outline:hover { background: var(--danger-light); }
+
+  /* DASHBOARD */
+  #dashboard { display: none; padding: 28px 0 48px; }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .toolbar-right { margin-left: auto; font-size: 11px; color: var(--muted); }
+
+  /* STATS */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 16px 18px;
+    border-top: 3px solid var(--border);
+  }
+  .stat-card.green { border-top-color: var(--accent); }
+  .stat-card.blue { border-top-color: var(--blue); }
+  .stat-card.gold { border-top-color: var(--warn); }
+  .stat-card.red { border-top-color: var(--danger); }
+
+  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+  .stat-val { font-size: 22px; font-weight: 600; color: var(--ink); font-family: 'Fraunces', serif; }
+  .stat-val.pos { color: var(--accent); }
+  .stat-val.neg { color: var(--danger); }
+  .stat-sub { font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+  /* GRID */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .panel-head {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface2);
+  }
+
+  .panel-title {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--ink);
+  }
+
+  /* CONNECT STEPS */
+  #connect-flow { padding: 24px; }
+
+  .step {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .step-head {
+    padding: 12px 16px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .step-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .step-num.done { background: var(--accent); border-color: var(--accent); color: white; }
+  .step-num.active { border-color: var(--accent); color: var(--accent); }
+
+  .step-body { padding: 16px; font-size: 12px; line-height: 1.7; color: var(--muted); }
+
+  .step-body a {
+    color: var(--accent);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  #connect-url-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 10px 12px;
+    font-size: 11px;
+    word-break: break-all;
+    color: var(--blue);
+    margin: 10px 0;
+    display: none;
+  }
+
+  /* TRADE LOG */
+  #trade-log { max-height: 500px; overflow-y: auto; }
+  #trade-log::-webkit-scrollbar { width: 3px; }
+  #trade-log::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .log-entry {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    animation: fadeIn 0.3s ease;
+  }
+  .log-entry:last-child { border-bottom: none; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .log-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+  .log-time { font-size: 10px; color: var(--muted); }
+  .log-symbol { font-size: 15px; font-weight: 600; font-family: 'Fraunces', serif; color: var(--ink); margin-bottom: 3px; }
+  .log-reason { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .log-detail { font-size: 11px; color: var(--ink); margin-top: 4px; font-weight: 600; }
+
+  .tag {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+  }
+  .tag-buy { background: var(--accent-light); color: var(--accent); }
+  .tag-sell { background: var(--danger-light); color: var(--danger); }
+  .tag-hold { background: var(--blue-light); color: var(--blue); }
+  .tag-analysis { background: var(--warn-light); color: var(--warn); }
+  .tag-error { background: var(--danger-light); color: var(--danger); }
+  .tag-info { background: var(--surface2); color: var(--muted); }
+
+  /* POSITIONS */
+  #positions-body { padding: 16px 18px; }
+
+  .pos-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .pos-row:last-child { border-bottom: none; }
+  .pos-sym { font-size: 15px; font-weight: 600; font-family: 'Fraunces', serif; }
+  .pos-qty { font-size: 10px; color: var(--muted); }
+  .pos-pnl { text-align: right; font-size: 12px; font-weight: 600; }
+  .pos-pnl.pos { color: var(--accent); }
+  .pos-pnl.neg { color: var(--danger); }
+
+  .thinking-row {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--warn);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 12px; height: 12px;
+    border: 2px solid var(--border);
+    border-top-color: var(--warn);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  .empty { padding: 28px 18px; text-align: center; color: var(--muted); font-size: 12px; }
+
+  /* ACCOUNT SELECTOR */
+  .account-select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 7px 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink);
+    outline: none;
+    cursor: pointer;
+  }
+
+  @media (max-width: 860px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .main-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .setup-card { padding: 28px 20px; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="header-inner">
+      <div class="logo">Claude <em>Trader</em></div>
+      <div class="header-meta">
+        <span id="market-pill" class="pill pill-grey">MARKET —</span>
+        <span id="status-pill" class="pill pill-grey">NOT CONNECTED</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- SETUP -->
+  <div id="setup-screen">
+    <div class="setup-card">
+      <h2>Connect to Questrade</h2>
+      <p class="subtitle">Enter your SnapTrade and Anthropic keys to get started. Keys are stored only in your browser session.</p>
+
+      <div class="warn-box">
+        ⚠️ Never share API keys in chat. If you have, regenerate them immediately before proceeding.
+      </div>
+
+      <div class="field">
+        <label>SnapTrade Client ID</label>
+        <input type="text" id="inp-clientid" placeholder="PERS-XXXXXXXXXXXXXXXX" />
+      </div>
+      <div class="field">
+        <label>SnapTrade Consumer Key</label>
+        <input type="password" id="inp-consumerkey" placeholder="••••••••••••••••••••••" />
+      </div>
+      <div class="field">
+        <label>Anthropic API Key</label>
+        <input type="password" id="inp-claudekey" placeholder="sk-ant-••••••••••••••" />
+      </div>
+
+      <button class="btn btn-primary" id="setup-btn" onclick="startSetup()">Connect & Continue</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard">
+
+    <div class="toolbar">
+      <button class="btn btn-outline btn-sm" id="run-btn" onclick="runAnalysis()">▶ Analyse Now</button>
+      <button class="btn btn-outline btn-sm" id="pause-btn" onclick="togglePause()">⏸ Pause</button>
+      <button class="btn btn-danger-outline btn-sm" onclick="disconnect()">Disconnect</button>
+      <select class="account-select" id="account-select" onchange="onAccountChange()">
+        <option value="">— Select account —</option>
+      </select>
+      <span class="toolbar-right" id="next-label">Next run: —</span>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card green">
+        <div class="stat-label">Portfolio Value</div>
+        <div class="stat-val" id="s-portfolio">—</div>
+        <div class="stat-sub" id="s-portfolio-sub">Questrade</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">Cash</div>
+        <div class="stat-val" id="s-cash">—</div>
+        <div class="stat-sub" id="s-cash-sub">&nbsp;</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="stat-label">Positions</div>
+        <div class="stat-val" id="s-positions">—</div>
+        <div class="stat-sub" id="s-positions-sub">&nbsp;</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">Today P&L</div>
+        <div class="stat-val" id="s-pnl">—</div>
+        <div class="stat-sub" id="s-pnl-sub">&nbsp;</div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <!-- LEFT: connect flow + trade log -->
+      <div>
+        <!-- Step flow for first-time connection -->
+        <div class="panel" id="connect-panel">
+          <div class="panel-head">
+            <span class="panel-title">Account Setup</span>
+            <span id="connect-status-tag" class="tag tag-info">PENDING</span>
+          </div>
+          <div id="connect-flow">
+            <div class="step" id="step1">
+              <div class="step-head">
+                <div class="step-num active" id="sn1">1</div>
+                Register SnapTrade User
+              </div>
+              <div class="step-body" id="sb1">
+                Click below to register your session with SnapTrade.<br><br>
+                <button class="btn btn-outline btn-sm" onclick="registerUser()">Register User</button>
+              </div>
+            </div>
+            <div class="step" id="step2">
+              <div class="step-head">
+                <div class="step-num" id="sn2">2</div>
+                Connect Questrade Account
+              </div>
+              <div class="step-body" id="sb2" style="color:var(--border)">
+                A secure link will open to connect your Questrade account via SnapTrade's portal.
+                <div id="connect-url-box"></div>
+              </div>
+            </div>
+            <div class="step" id="step3">
+              <div class="step-head">
+                <div class="step-num" id="sn3">3</div>
+                Load Accounts & Start Trading
+              </div>
+              <div class="step-body" id="sb3" style="color:var(--border)">
+                Once connected, select your Questrade account and Claude will begin analysing.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trade log -->
+        <div class="panel" style="margin-top:20px;">
+          <div class="panel-head">
+            <span class="panel-title">Claude's Trade Log</span>
+            <span id="thinking-tag" style="display:none" class="tag tag-analysis">THINKING...</span>
+          </div>
+          <div id="trade-log">
+            <div class="empty">No analysis yet. Complete setup above then click "Analyse Now".</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: positions -->
+      <div class="panel" style="align-self: start;">
+        <div class="panel-head">
+          <span class="panel-title">Open Positions</span>
+        </div>
+        <div id="positions-body">
+          <div class="empty">No positions loaded</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const SNAPTRADE_BASE = 'https://api.snaptrade.com/api/v1';
+const INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 hours
+const WATCHLIST = ['AAPL','MSFT','NVDA','GOOGL','AMZN','META','TSLA','AMD','PLTR','SOFI'];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let S = {
+  clientId: '', consumerKey: '', claudeKey: '',
+  userId: '', userSecret: '',
+  accountId: '', accounts: [],
+  paused: false, running: false,
+  intervalId: null, nextRun: null,
+  setupStep: 1
+};
+
+// ─── SNAPTRADE SIGNATURE ─────────────────────────────────────────────────────
+async function snapSign(path, query, body) {
+  const ts = Math.floor(Date.now() / 1000).toString();
+  const qs = query ? (query + '&timestamp=' + ts) : ('timestamp=' + ts);
+  const sigObj = { content: body || '', path, query: qs };
+  const sigStr = JSON.stringify(sigObj);
+  const enc = new TextEncoder();
+  const keyData = enc.encode(S.consumerKey);
+  const msgData = enc.encode(sigStr);
+  const cryptoKey = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', cryptoKey, msgData);
+  const b64 = btoa(String.fromCharCode(...new Uint8Array(sig)));
+  return { ts, qs, sig: b64 };
+}
+
+async function snapReq(method, path, query, body) {
+  const { ts, qs, sig } = await snapSign(path, query, body ? body : '');
+  const url = SNAPTRADE_BASE + path + '?' + qs;
+  const opts = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'clientId': S.clientId,
+      'timestamp': ts,
+      'signature': sig
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  const text = await res.text();
+  let data;
+  try { data = JSON.parse(text); } catch { data = text; }
+  if (!res.ok) throw new Error((data && data.detail) || (data && data.message) || `HTTP ${res.status}: ${text.slice(0,200)}`);
+  return data;
+}
+
+// ─── SETUP ────────────────────────────────────────────────────────────────────
+function startSetup() {
+  const cid = document.getElementById('inp-clientid').value.trim();
+  const ck = document.getElementById('inp-consumerkey').value.trim();
+  const ak = document.getElementById('inp-claudekey').value.trim();
+  if (!cid || !ck || !ak) { alert('Please fill in all three fields.'); return; }
+  S.clientId = cid; S.consumerKey = ck; S.claudeKey = ak;
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  setStatus('pill-blue', 'CONNECTED');
+  updateMarketStatus();
+}
+
+function disconnect() {
+  clearInterval(S.intervalId);
+  S = { clientId:'', consumerKey:'', claudeKey:'', userId:'', userSecret:'', accountId:'', accounts:[], paused:false, running:false, intervalId:null, nextRun:null, setupStep:1 };
+  document.getElementById('setup-screen').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('inp-clientid').value = '';
+  document.getElementById('inp-consumerkey').value = '';
+  document.getElementById('inp-claudekey').value = '';
+  setStatus('pill-grey', 'NOT CONNECTED');
+}
+
+// ─── STEP 1: REGISTER USER ────────────────────────────────────────────────────
+async function registerUser() {
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = 'Registering...';
+  try {
+    // Generate a stable userId from clientId
+    S.userId = 'trader_' + S.clientId.replace(/[^a-zA-Z0-9]/g, '').slice(-8) + '_01';
+    
+    // Try to register (may already exist)
+    try {
+      const reg = await snapReq('POST', '/snapTrade/registerUser', '', { userId: S.userId });
+      S.userSecret = reg.userSecret;
+    } catch(e) {
+      // User may already exist — try to get secret via delete+re-register or just proceed
+      if (e.message.includes('already exists') || e.message.includes('409')) {
+        // Try to delete and re-register
+        try {
+          await snapReq('DELETE', '/snapTrade/deleteUser', 'userId=' + S.userId, null);
+        } catch(_) {}
+        const reg2 = await snapReq('POST', '/snapTrade/registerUser', '', { userId: S.userId });
+        S.userSecret = reg2.userSecret;
+      } else {
+        throw e;
+      }
+    }
+
+    // Mark step 1 done
+    markStepDone(1);
+    activateStep(2);
+    document.getElementById('sb2').style.color = '';
+
+    // Generate connection portal URL
+    await generateConnectionUrl();
+
+  } catch(e) {
+    btn.disabled = false; btn.textContent = 'Register User';
+    addLog({ type:'error', title:'Registration Failed', reason: e.message });
+  }
+}
+
+async function generateConnectionUrl() {
+  try {
+    const body = {
+      userId: S.userId,
+      userSecret: S.userSecret,
+      broker: 'QUESTRADE',
+      immediateRedirect: true,
+      customRedirect: window.location.href,
+      connectionType: 'trade'
+    };
+    const data = await snapReq('POST', '/snapTrade/login', 'userId=' + S.userId + '&userSecret=' + S.userSecret, body);
+    const url = data.redirectURI || data.redirect_uri || data;
+    const box = document.getElementById('connect-url-box');
+    box.style.display = 'block';
+    box.innerHTML = `<a href="${url}" target="_blank" onclick="onPortalOpened()">Click here to connect your Questrade account →</a>`;
+    document.getElementById('sb2').innerHTML += `<br><div id="connect-url-box" style="display:block; background:var(--bg); border:1px solid var(--border); border-radius:3px; padding:10px 12px; font-size:11px; word-break:break-all; color:var(--blue); margin:10px 0;"><a href="${url}" target="_blank" onclick="onPortalOpened()">Click here to connect your Questrade account →</a></div><br><button class="btn btn-outline btn-sm" onclick="loadAccounts()">✓ I've connected — Load Accounts</button>`;
+  } catch(e) {
+    addLog({ type:'error', title:'Portal Error', reason: e.message });
+  }
+}
+
+function onPortalOpened() {
+  setTimeout(() => {
+    document.getElementById('sb2').style.color = '';
+  }, 1000);
+}
+
+// ─── STEP 2: LOAD ACCOUNTS ────────────────────────────────────────────────────
+async function loadAccounts() {
+  try {
+    const accounts = await snapReq('GET', '/accounts', 'userId=' + S.userId + '&userSecret=' + S.userSecret);
+    S.accounts = accounts;
+
+    const sel = document.getElementById('account-select');
+    sel.innerHTML = '<option value="">— Select account —</option>';
+    accounts.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = (a.name || a.number || a.id) + (a.institution_name ? ' (' + a.institution_name + ')' : '');
+      sel.appendChild(opt);
+    });
+
+    markStepDone(2);
+    activateStep(3);
+    document.getElementById('sb3').style.color = '';
+    document.getElementById('sb3').innerHTML = 'Select your Questrade account from the dropdown above, then click <strong>Analyse Now</strong> to start.';
+    document.getElementById('connect-status-tag').className = 'tag tag-buy';
+    document.getElementById('connect-status-tag').textContent = 'CONNECTED';
+
+    addLog({ type:'info', title:'Accounts Loaded', reason: accounts.length + ' account(s) found. Select one above.' });
+
+    if (accounts.length === 1) {
+      sel.value = accounts[0].id;
+      onAccountChange();
+    }
+
+  } catch(e) {
+    addLog({ type:'error', title:'Load Failed', reason: e.message });
+  }
+}
+
+function onAccountChange() {
+  S.accountId = document.getElementById('account-select').value;
+  if (S.accountId) {
+    refreshStats();
+    scheduleNext();
+  }
+}
+
+// ─── STATS ────────────────────────────────────────────────────────────────────
+async function refreshStats() {
+  if (!S.accountId) return;
+  try {
+    const qs = 'userId=' + S.userId + '&userSecret=' + S.userSecret;
+    const holdings = await snapReq('GET', '/accounts/' + S.accountId + '/holdings', qs);
+
+    // Cash
+    let cash = 0;
+    if (holdings.balances) {
+      holdings.balances.forEach(b => { if (b.currency && b.currency.code === 'USD') cash = b.cash; });
+      if (cash === 0 && holdings.balances.length > 0) cash = holdings.balances[0].cash || 0;
+    }
+
+    // Positions
+    const positions = holdings.positions || [];
+    let marketValue = cash;
+    let totalPnl = 0;
+    positions.forEach(p => {
+      marketValue += (p.price || 0) * (p.units || 0);
+      totalPnl += p.open_pnl || 0;
+    });
+
+    document.getElementById('s-portfolio').textContent = '$' + marketValue.toFixed(2);
+    document.getElementById('s-cash').textContent = '$' + cash.toFixed(2);
+    document.getElementById('s-positions').textContent = positions.length;
+    document.getElementById('s-pnl').textContent = (totalPnl >= 0 ? '+$' : '-$') + Math.abs(totalPnl).toFixed(2);
+    document.getElementById('s-pnl').className = 'stat-val ' + (totalPnl >= 0 ? 'pos' : 'neg');
+
+    renderPositions(positions);
+    return { cash, positions, marketValue };
+  } catch(e) {
+    addLog({ type:'error', title:'Stats Error', reason: e.message });
+    return null;
+  }
+}
+
+function renderPositions(positions) {
+  const body = document.getElementById('positions-body');
+  if (!positions.length) { body.innerHTML = '<div class="empty">No open positions</div>'; return; }
+  body.innerHTML = positions.map(p => {
+    const sym = p.symbol?.symbol || p.symbol?.raw_symbol || '?';
+    const pnl = p.open_pnl || 0;
+    const pnlPct = p.average_purchase_price ? ((( p.price - p.average_purchase_price) / p.average_purchase_price) * 100) : 0;
+    return `<div class="pos-row">
+      <div>
+        <div class="pos-sym">${sym}</div>
+        <div class="pos-qty">${p.units} units @ $${(p.average_purchase_price||0).toFixed(2)}</div>
+      </div>
+      <div class="pos-pnl ${pnl >= 0 ? 'pos' : 'neg'}">
+        ${pnl >= 0 ? '+' : ''}$${Math.abs(pnl).toFixed(2)}<br>
+        <span style="font-size:10px">${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(1)}%</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── MARKET STATUS ────────────────────────────────────────────────────────────
+function updateMarketStatus() {
+  const now = new Date();
+  const day = now.getUTCDay();
+  const h = now.getUTCHours();
+  const m = now.getUTCMinutes();
+  const mins = h * 60 + m;
+  // NYSE: 9:30am–4pm ET = 14:30–21:00 UTC (approximate, ignoring DST)
+  const isWeekday = day >= 1 && day <= 5;
+  const isHours = mins >= 870 && mins < 1260; // 14:30–21:00 UTC
+  const open = isWeekday && isHours;
+  const pill = document.getElementById('market-pill');
+  pill.textContent = open ? 'MARKET OPEN' : 'MARKET CLOSED';
+  pill.className = 'pill ' + (open ? 'pill-green' : 'pill-grey');
+}
+
+// ─── SCHEDULING ───────────────────────────────────────────────────────────────
+function scheduleNext() {
+  if (S.intervalId) clearInterval(S.intervalId);
+  S.intervalId = setInterval(() => { if (!S.paused && !S.running && S.accountId) runAnalysis(); }, INTERVAL_MS);
+  S.nextRun = Date.now() + INTERVAL_MS;
+  updateNextLabel();
+  setInterval(updateNextLabel, 60000);
+}
+
+function updateNextLabel() {
+  if (S.paused) { document.getElementById('next-label').textContent = 'Auto-trading paused'; return; }
+  if (!S.nextRun) return;
+  const diff = Math.max(0, S.nextRun - Date.now());
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  document.getElementById('next-label').textContent = `Next run: ${h}h ${m}m`;
+}
+
+function togglePause() {
+  S.paused = !S.paused;
+  document.getElementById('pause-btn').textContent = S.paused ? '▶ Resume' : '⏸ Pause';
+  updateNextLabel();
+}
+
+// ─── MAIN ANALYSIS ────────────────────────────────────────────────────────────
+async function runAnalysis() {
+  if (S.running || !S.accountId) {
+    if (!S.accountId) alert('Please select an account first.');
+    return;
+  }
+  S.running = true;
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('thinking-tag').style.display = 'inline';
+  addThinking();
+
+  try {
+    // Refresh stats & get data
+    const stats = await refreshStats();
+    if (!stats) throw new Error('Could not load account data');
+
+    const { cash, positions, marketValue } = stats;
+
+    // Get market data from a free source
+    let marketData = '';
+    try {
+      const symbols = WATCHLIST.join(',');
+      const quotes = await fetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}&fields=symbol,regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketVolume,fiftyDayAverage,twoHundredDayAverage`);
+      if (quotes.ok) {
+        const qd = await quotes.json();
+        const results = qd?.quoteResponse?.result || [];
+        marketData = 'LIVE MARKET DATA:\n';
+        results.forEach(r => {
+          const chg = r.regularMarketChangePercent || 0;
+          marketData += `${r.symbol}: $${(r.regularMarketPrice||0).toFixed(2)} (${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%) | Vol: ${(r.regularMarketVolume||0).toLocaleString()} | 50d avg: $${(r.fiftyDayAverage||0).toFixed(2)} | 200d avg: $${(r.twoHundredDayAverage||0).toFixed(2)}\n`;
+        });
+      }
+    } catch(_) {
+      marketData = 'Market data unavailable — use general knowledge for analysis.\n';
+    }
+
+    const positionsSummary = positions.length
+      ? positions.map(p => {
+          const sym = p.symbol?.symbol || p.symbol?.raw_symbol || '?';
+          return `${sym}: ${p.units} units, avg $${(p.average_purchase_price||0).toFixed(2)}, current $${(p.price||0).toFixed(2)}, P&L $${(p.open_pnl||0).toFixed(2)}`;
+        }).join('\n')
+      : 'None';
+
+    // Claude prompt
+    const prompt = `You are an AI stock trader managing a real brokerage portfolio on Questrade (Canada). Make smart, data-driven decisions to grow this portfolio over time.
+
+PORTFOLIO:
+- Total value: $${marketValue.toFixed(2)} USD
+- Available cash: $${cash.toFixed(2)} USD
+- Open positions:
+${positionsSummary}
+
+${marketData}
+
+TRADING RULES:
+- Only trade stocks from this watchlist: ${WATCHLIST.join(', ')}
+- Never put more than 30% of total equity in a single stock
+- Always keep at least $10 cash reserve
+- Use dollar amounts for buys (not share counts) — Questrade supports fractional shares
+- Minimum trade size: $5
+- Only sell positions you currently hold (listed above)
+- Consider momentum, moving averages, volume, and diversification
+- With a small portfolio, be selective — 1-3 trades max per session
+
+Respond ONLY with a valid JSON object, no other text:
+{
+  "marketSummary": "2-3 sentence overview of current market conditions and your overall strategy",
+  "trades": [
+    {
+      "action": "BUY" or "SELL",
+      "symbol": "AAPL",
+      "dollarAmount": 20.00,
+      "reasoning": "Specific reason for this trade based on the data"
+    }
+  ],
+  "holdReasoning": "Why you are holding or not making additional trades",
+  "riskNote": "Key risk consideration for this session"
+}
+
+If no trades should be made, return an empty trades array. Respond with JSON only.`;
+
+    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': S.claudeKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const cd = await claudeRes.json();
+    if (!claudeRes.ok) throw new Error(cd.error?.message || 'Claude API error');
+
+    const rawText = cd.content.map(b => b.text || '').join('');
+    let decision;
+    try {
+      decision = JSON.parse(rawText.replace(/```json|```/g, '').trim());
+    } catch { throw new Error('Could not parse Claude response'); }
+
+    removeThinking();
+
+    // Log analysis
+    addLog({ type:'analysis', title:'Market Analysis', reason: decision.marketSummary, detail: decision.riskNote || '' });
+
+    // Execute trades
+    if (decision.trades && decision.trades.length > 0) {
+      for (const trade of decision.trades) {
+        await executeTrade(trade, cash, positions);
+      }
+    } else {
+      addLog({ type:'hold', title:'No Trades', reason: decision.holdReasoning || 'Holding current positions.' });
+    }
+
+    await refreshStats();
+    S.nextRun = Date.now() + INTERVAL_MS;
+    updateNextLabel();
+    updateMarketStatus();
+
+  } catch(e) {
+    removeThinking();
+    addLog({ type:'error', title:'Analysis Error', reason: e.message });
+  }
+
+  S.running = false;
+  document.getElementById('run-btn').disabled = false;
+  document.getElementById('thinking-tag').style.display = 'none';
+}
+
+// ─── EXECUTE TRADE ────────────────────────────────────────────────────────────
+async function executeTrade(trade, cash, positions) {
+  try {
+    if (!trade.symbol || !trade.action || !trade.dollarAmount) return;
+    const amount = parseFloat(trade.dollarAmount);
+    if (amount < 5) return;
+
+    const qs = 'userId=' + S.userId + '&userSecret=' + S.userSecret;
+
+    if (trade.action === 'BUY') {
+      if (amount > cash - 10) {
+        addLog({ type:'hold', title: trade.symbol, reason: 'Skipped — not enough cash ($' + cash.toFixed(2) + ' available, need $' + (amount + 10).toFixed(2) + ')' });
+        return;
+      }
+
+      // Find universal symbol ID
+      const symSearch = await snapReq('GET', '/symbols/searchV2', 'substring=' + trade.symbol);
+      const symResult = symSearch.find && symSearch.find(s => s.symbol === trade.symbol || s.raw_symbol === trade.symbol);
+      if (!symResult) {
+        addLog({ type:'error', title: trade.symbol, reason: 'Symbol not found in SnapTrade' });
+        return;
+      }
+
+      // Check trade impact
+      const impactBody = {
+        account_id: S.accountId,
+        universal_symbol_id: symResult.id,
+        action: 'BUY',
+        order_type: 'Market',
+        time_in_force: 'Day',
+        notional_value: { amount, currency: 'USD' }
+      };
+      const impact = await snapReq('POST', '/trade/impact', qs, impactBody);
+
+      // Place order
+      await snapReq('POST', '/trade/' + impact.trade.id, qs, {});
+      addLog({ type:'buy', title: trade.symbol, reason: trade.reasoning, detail: 'Bought $' + amount.toFixed(2) + ' worth' });
+
+    } else if (trade.action === 'SELL') {
+      const pos = positions.find(p => (p.symbol?.symbol === trade.symbol || p.symbol?.raw_symbol === trade.symbol));
+      if (!pos) {
+        addLog({ type:'hold', title: trade.symbol, reason: 'No position to sell' });
+        return;
+      }
+
+      const symId = pos.symbol?.id;
+      const impactBody = {
+        account_id: S.accountId,
+        universal_symbol_id: symId,
+        action: 'SELL',
+        order_type: 'Market',
+        time_in_force: 'Day',
+        units: pos.units
+      };
+      const impact = await snapReq('POST', '/trade/impact', qs, impactBody);
+      await snapReq('POST', '/trade/' + impact.trade.id, qs, {});
+      addLog({ type:'sell', title: trade.symbol, reason: trade.reasoning, detail: 'Sold ' + pos.units + ' units' });
+    }
+
+  } catch(e) {
+    addLog({ type:'error', title: trade.symbol, reason: 'Order failed: ' + e.message });
+  }
+}
+
+// ─── LOG ──────────────────────────────────────────────────────────────────────
+function addThinking() {
+  const log = document.getElementById('trade-log');
+  const empty = log.querySelector('.empty');
+  if (empty) empty.remove();
+  const el = document.createElement('div');
+  el.id = 'thinking-row';
+  el.className = 'thinking-row';
+  el.innerHTML = '<div class="spinner"></div> Claude is analysing the market...';
+  log.prepend(el);
+}
+
+function removeThinking() {
+  const el = document.getElementById('thinking-row');
+  if (el) el.remove();
+}
+
+function addLog({ type, title, reason, detail }) {
+  const log = document.getElementById('trade-log');
+  const empty = log.querySelector('.empty');
+  if (empty) empty.remove();
+
+  const tagMap = { buy:'tag-buy', sell:'tag-sell', hold:'tag-hold', analysis:'tag-analysis', error:'tag-error', info:'tag-info' };
+  const labelMap = { buy:'BUY', sell:'SELL', hold:'HOLD', analysis:'ANALYSIS', error:'ERROR', info:'INFO' };
+
+  const el = document.createElement('div');
+  el.className = 'log-entry';
+  el.innerHTML = `
+    <div class="log-top">
+      <span class="log-time">${new Date().toLocaleTimeString()}</span>
+      <span class="tag ${tagMap[type] || 'tag-info'}">${labelMap[type] || type.toUpperCase()}</span>
+    </div>
+    <div class="log-symbol">${title}</div>
+    <div class="log-reason">${reason}</div>
+    ${detail ? `<div class="log-detail">${detail}</div>` : ''}
+  `;
+  log.prepend(el);
+}
+
+// ─── STEP HELPERS ─────────────────────────────────────────────────────────────
+function markStepDone(n) {
+  const el = document.getElementById('sn' + n);
+  el.className = 'step-num done';
+  el.textContent = '✓';
+}
+function activateStep(n) {
+  const el = document.getElementById('sn' + n);
+  el.className = 'step-num active';
+}
+
+// ─── STATUS ───────────────────────────────────────────────────────────────────
+function setStatus(cls, text) {
+  const el = document.getElementById('status-pill');
+  el.className = 'pill ' + cls;
+  el.textContent = text;
+}
+</script>
+</body>
+</html>
